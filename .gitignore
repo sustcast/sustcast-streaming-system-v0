@@ -1,5 +1,7 @@
 music/
 news/
+incomplete/
+DB/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -92,6 +94,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+rest_api/venv_api
 
 # Spyder project settings
 .spyderproject

@@ -1,0 +1,13 @@
+
+//streamripper
+sudo apt-get update
+sudo apt-get install streamripper
+
+//icecast2
+//ices0.4
+https://www.linux.com/news/broadcast-your-music-icecast
+https://github.com/dcorbe/ices/blob/master/README
+https://icecast.org/docs/icecast-trunk/server_stats/#json-stats
+
+Github: sustcast (10s1071s17)
+Gmail: sustcast@gmail.com (10s1071s17)
