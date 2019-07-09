@@ -10,6 +10,7 @@ import socket
 import re
 import sqlite3
 from datetime import datetime
+from mp3_tagger import MP3File, VERSION_1, VERSION_2, VERSION_BOTH
 
 #things for clarification
 	#cla--classical etr--electronic fok--folk met--metal pop--pop rap--rap rck--rock scl--semi-Classical
@@ -62,7 +63,7 @@ def newsFetcher():
 
 	global newsPath
 
-	print "News Fetcher ==> News Fetcher alive" 
+	print ("News Fetcher ==> News Fetcher Started") 
 	
 	var = 1
 	while var == 1:
@@ -97,7 +98,7 @@ def newsFetcher():
 		time.sleep(slp)
 
 def requestFetcher():
-	print "Request Fetcher ==> Request fetcher alive"
+	print ("Request Fetcher ==> Request fetcher Started")
 
 	var = 1
 	while var == 1:
@@ -125,12 +126,12 @@ def requestFetcher():
 
 				path = searchMusicFile(song,artist)
 
-				print "Request Fetcher ==> Got a request from "+name+" for "+artist +" " +song
+				print ("Request Fetcher ==> Got a request from "+name+" for "+artist +" " +song)
 
 				if len(path) == 0:
 
-					print "Request Fetcher ==> Did not find requested music in Music Collection"
-					print "Request Fetcher ==> Downloading....."
+					print ("Request Fetcher ==> Did not find requested music in Music Collection")
+					print ("Request Fetcher ==> Downloading.....")
 
 					music = artist + " " +song
 
@@ -155,10 +156,10 @@ def requestFetcher():
 					os.system("sox '"+mainPath+fileList[j]+"' -C 128 -r 44100 -c 2 '"+path+"'")
 					os.remove(mainPath+fileList[j])
 
-					print "Request Fetcher ==> Downloading Completed"
+					print ("Request Fetcher ==> Downloading Completed")
 
 				else:
-					print "Request Fetcher ==> Found Requested Music in Music Collection"
+					print ("Request Fetcher ==> Found Requested Music in Music Collection")
 
 
 				command = "UPDATE REQ set PATH = '"+path+"' where ID = "+str(ID)
@@ -174,8 +175,8 @@ def requestFetcher():
 			time.sleep(60)
 
 		except Exception as ex:
-			print "request fetcher == > System Down"
-			print ex
+			print ("request fetcher == > System Down")
+			print (ex)
 
 		
 # 		def searchMusicFile(songName,artistName):
