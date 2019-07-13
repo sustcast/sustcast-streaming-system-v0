@@ -11,3 +11,15 @@ https://icecast.org/docs/icecast-trunk/server_stats/#json-stats
 
 Github: sustcast (10s1071s17)
 Gmail: sustcast@gmail.com (10s1071s17)
+
+https://pypi.org/project/mp3-tagger/
+
+https://github.com/yask123/Instant-Music-Downloader
+
+#gTTS
+https://pypi.org/project/gTTS/
+https://github.com/pndurette/gTTS/issues/158
+
+#sox
+sudo apt-get install libsox-fmt-mp3
+sudo apt-get install sox

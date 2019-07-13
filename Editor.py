@@ -23,12 +23,18 @@ from mp3_tagger import MP3File, VERSION_1, VERSION_2, VERSION_BOTH
 ##Environment Setup
 basePath = "/home/meow-one/sustcast-streamming-system/"
 ##genre list
-path_genre = [basePath+"music/cla/",basePath+"music/etr/",basePath+"music/fok/",basePath+"music/met/",basePath+"music/pop/",basePath+"music/rap/",basePath+"music/rck/",basePath+"music/scl/"]
+path_genre_abs = [basePath+"music/cla/",basePath+"music/etr/",basePath+"music/fok/",basePath+"music/met/",basePath+"music/pop/",basePath+"music/rap/",basePath+"music/rck/",basePath+"music/scl/"]
+path_genre = ["music/cla/","music/etr/","music/fok/","music/met/","music/pop/","music/rap/","music/rck/","music/scl/"]
 numGenre = 8
 genreName = ["classical","electronic" , "folk" , "metal" , "pop" , "rap" , "rock", "semi-classical"]
 ##NEWS
 newsPath = basePath+'news/'
-
+newsTimeDuration = 600 #sec
+##Request
+requestPath = basePath+'music/request/'
+requestProcessInterval = 60 #sec
+##Buffer
+bufferPath = basePath+'music/buffer/'
 ##streamer
 icecastPass = 'alchemist'
 streamName = 'sustcast'
@@ -45,15 +51,8 @@ deltaMeow = ["en-uk","Aurora Meow"]
 RJ = [alphaMeow,betaMeow,gammaMeow,deltaMeow]
 
 #functions
-def replace_line(file_name, line_num, text):
-    lines = open(file_name, 'r').readlines()
-    lines[line_num] = text
-    out = open(file_name, 'w')
-    out.writelines(lines)
-    out.close()
-	#replace_line('stats.txt', 0, 'Mage')
 
-#ices -h 103.84.159.230 -P alchemist -F playlist.txt -m sustcast -d 'SUSTcast is the campus radio for Shahjalal University of Science and Technology which is powered by RADIO MEOW PROJECT created by Meow Labs' -n SUSTcast
+##ices -h 103.84.159.230 -P alchemist -F playlist.txt -m sustcast -d 'SUSTcast is the campus radio for Shahjalal University of Science and Technology which is powered by RADIO MEOW PROJECT created by Meow Labs' -n SUSTcast
 def ices():
 	cmd = 'ices -h '+icecastIP+' -P '+icecastPass+' -F '+playlistFile+' -m '+streamMountName+' -d '+streamDescription+' -n '+streamName
 	#print(cmd)
@@ -74,10 +73,10 @@ def newsFetcher():
 		#print name
 
 		if M == 0 :
-			name = datetime.now().strftime("News_%d_%m_%Y_%H.mp3")
+			name = datetime.now().strftime("News_%Y_%m_%d_%H.mp3")
 			print ("News Fetcher ==> recording start @" + name)
 
-			os.system ("streamripper http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-einws -l 420 -s")
+			os.system ("streamripper http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-einws -l "+str(newsTimeDuration)+" -s")
 
 			os.system ("mv 'incomplete/ - .mp3' '"+newsPath+name+"'")
 
@@ -97,7 +96,47 @@ def newsFetcher():
 
 		time.sleep(slp)
 
+def readNews(songSpeech,rj):
+	global newsPath
+	global basePath
+	global bufferPath
+	newsList = os.listdir(newsPath)
+
+	l = len(newsList)
+
+	while l > 0:
+		l = l - 1
+		if newsList[l] == "news.mp3":
+			print ("news preparing")
+
+			speech = "Hello listeners, Its RJ MockingJay Meow. You are listening to SUSTCAST. Now you will listen to the latest bulletin from BBC World Services."
+
+			os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o "+bufferPath+"rjTemp.mp3")
+			os.system("sox "+bufferPath+"rjTemp.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"rjTemp1.mp3")
+			os.system("sox "+bufferPath+"silence5.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"silence55.mp3")
+			os.system("sox "+bufferPath+"silence55.mp3 "+bufferPath+"rjTemp1.mp3 "+bufferPath+"rjTemp2.mp3")
+
+			os.system("sox "+newsPath+"news.mp3 -C 128 -r 44100 -c 2 "+newsPath+"newsTemp.mp3")
+			os.system("sox "+bufferPath+"rjTemp2.mp3 "+newsPath+"newsTemp.mp3 "+bufferPath+"rjTemp3.mp3")
+			
+			os.system("gtts-cli '"+ songSpeech +"' -l '"+rj[0]+"' -o "+bufferPath+"rjTemp.mp3")
+			os.system("sox "+bufferPath+"rjTemp.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"rjTemp1.mp3")
+			os.system("sox "+bufferPath+"silence5.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"silence55.mp3")
+			os.system("sox "+bufferPath+"silence55.mp3 "+bufferPath+"rjTemp1.mp3 "+bufferPath+"rjTemp2.mp3")
+
+			os.system("sox "+bufferPath+"rjTemp3.mp3 "+bufferPath+"rjTemp2.mp3 "+bufferPath+"rj.mp3")
+
+			os.remove(newsPath+"news.mp3")
+
+			print ("news prepared")
+
+			return 1
+
+
+	return 0
+
 def requestFetcher():
+	global basePath
 	print ("Request Fetcher ==> Request fetcher Started")
 
 	var = 1
@@ -133,11 +172,13 @@ def requestFetcher():
 					print ("Request Fetcher ==> Did not find requested music in Music Collection")
 					print ("Request Fetcher ==> Downloading.....")
 
+					artist = artist.lower()
+					song = song.lower()
 					music = artist + " " +song
 
 					os.system("instantmusic -p -q -s '"+ music + "'")
 
-					fileList = os.listdir(mainPath)
+					fileList = os.listdir(basePath)
 					musicFile = ""
 					l = len(fileList)
 					j = 0
@@ -151,9 +192,9 @@ def requestFetcher():
 						j = j + 1
 
 					
-					path = "/home/rb101/Music/RoboFM/request/"+artist+ "-" + song+".mp3"
+					path = basePath+"music/request/"+artist+ "-" + song+".mp3"
 
-					os.system("sox '"+mainPath+fileList[j]+"' -C 128 -r 44100 -c 2 '"+path+"'")
+					os.system("sox '"+basePath+fileList[j]+"' -C 128 -r 44100 -c 2 '"+path+"'")
 					os.remove(mainPath+fileList[j])
 
 					print ("Request Fetcher ==> Downloading Completed")
@@ -172,451 +213,462 @@ def requestFetcher():
 
 
 			conn.close()
-			time.sleep(60)
+			time.sleep(requestProcessInterval)
 
 		except Exception as ex:
 			print ("request fetcher == > System Down")
 			print (ex)
 
+def fulfilReq(songSpeech,rj):
+
+	retRj = ["0","0","0","0"]
+
+	conn = sqlite3.connect('DB/request.db')
+			#print "Opened request database successfully";
+
+	cursor = conn.execute("SELECT * from REQ where STATUS = 1")
+	for row in cursor:
+		ID = row[0]
+		name = row[1]
+		song = row[2]
+		artist = row[3]
+		timeStamp = row[4]
+		path = row[5]
+		status =  row[6]
+		lyric = ""
+
+		print ("Got a unfulfiled Request and the requested song is already downloaded")
+
+		speech = "Hello listeners, Its RJ MockingJay Meow. You are listening to SUSTCAST. We just recieved a song request from " + name +" with love. Now you will listen to " +song+" by "+ artist+"."
+
+		os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o "+bufferPath+"rjTemp.mp3")
+		os.system("sox "+bufferPath+"rjTemp.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"rjTemp1.mp3")
+		os.system("sox "+bufferPath+"silence5.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"silence55.mp3")
+		os.system("sox "+bufferPath+"silence55.mp3 "+bufferPath+"rjTemp1.mp3 "+bufferPath+"rjTemp2.mp3")
+
+		os.system("sox "+bufferPath+"rjTemp2.mp3 '"+path+"' "+bufferPath+"rjTemp3.mp3")
 		
-# 		def searchMusicFile(songName,artistName):
-			
-# 			global numGenre
-# 			global path_genre
+		os.system("gtts-cli '"+ songSpeech +"' -l '"+rj[0]+"' -o "+bufferPath+"rjTemp.mp3")
+		os.system("sox "+bufferPath+"rjTemp.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"rjTemp1.mp3")
+		os.system("sox "+bufferPath+"silence5.mp3 -C 128 -r 44100 -c 2 "+bufferPath+"silence55.mp3")
+		os.system("sox "+bufferPath+"silence55.mp3 "+bufferPath+"rjTemp1.mp3 "+bufferPath+"rjTemp2.mp3")
 
-# 			artistName = artistName.lower()
-# 			songName = songName.lower()
+		os.system("sox "+bufferPath+"rjTemp3.mp3 "+bufferPath+"rjTemp2.mp3 /home/rb101/Music/RoboFM/buffer/rj.mp3")
+
+		print ("REQ RJ prepared")
 
-# 			g = 0
+		try:
+			lyric = PyLyrics.getLyrics(artist,song)
+			lyric = lyric.replace("\n","$")
+	
+			if lyric.find("<") > -1:
+				lyric = ""
+			#print lyric
+
+		except:
+			print ("no lyrics found")
+
+
+		retRj[0] = "REQ"
+		retRj[1] = artist
+		retRj[2] = song
+		retRj[3] = lyric
+
+		command = "UPDATE REQ set STATUS = 2 where ID = "+str(ID)
+		conn.execute(command)
+		conn.commit()
+
+		conn.close()
+
+		return retRj
+
+	return retRj
+
+
+## helper functions
+def ret_time():
+	localtime = time.asctime(time.localtime(time.time()))
+	hour = 0;
+	hour = int(localtime[11]+localtime[12])
+	return hour
+
+def replace_line(file_name, line_num, text):
+    lines = open(file_name, 'r').readlines()
+    lines[line_num] = text
+    out = open(file_name, 'w')
+    out.writelines(lines)
+    out.close()
+	#replace_line('stats.txt', 0, 'Mage')
+
+def getStringFromFile(path):
+
+	s = open(path)
+	msg = ''
+	flg = 0
+
+	for m in s:
+		if flg == 0:
+			msg = msg+m.strip()
+			flg = 1
+		else:
+			msg = msg+"\n"+m.strip()
+
+	return msg
+
+def writeFile(string,path):
+	file = open(path,'w')
+	file.write(string)
+	file.close
+
+##used for genre wise decision making
+def user_data(tim):
+
+	EM = []
+	MM = []
+	EA = []
+	EV = []
+	NT = []
+	LN = []
+
+	EMi = []
+	MMi = []
+	EAi = []
+	EVi = []
+	NTi = []
+	LNi = []
+
+	global numGenre
+
+	if tim >= 0 and tim < 4:
+		i = 0
+		s = open("LN_data.txt")
+
+		for m in s:
+			LN.append(m.strip())
+
+		while i < numGenre:	
+			LNi.append(int(LN[i]))
+			i = i + 1
+		return LNi
+
+	if tim >= 4 and tim < 8:
+		i = 0
+		s = open("EM_data.txt")
+
+		for m in s:
+			EM.append(m.strip())
+
+		while i < numGenre:	
+			EMi.append(int(EM[i]))
+			i = i + 1
+		return EMi
+	
+	if tim >= 8 and tim < 12:
+		i = 0
+		s = open("MM_data.txt")
 
-# 			while g < numGenre:
+		for m in s:
+			MM.append(m.strip())
 
-# 				mus_list = os.listdir(path_genre[g])
+		while i < numGenre:	
+			MMi.append(int(MM[i]))
+			i = i + 1
+		return MMi
+	
+	if tim >= 12 and tim < 16:
+		i = 0
+		s = open("EA_data.txt")
 
-# 				l = len(mus_list)
+		for m in s:
+			EA.append(m.strip())
 
-# 				i = 0
+		while i < numGenre:	
+			EAi.append(int(EA[i]))
+			i = i + 1
+		return EAi
+	
+	if tim >= 16 and tim < 20:
+		i = 0
+		s = open("EV_data.txt")
 
-# 				while i < l:
-# 					music = getMusicName(mus_list[i])
+		for m in s:
+			EV.append(m.strip())
 
-# 					art = music[0].lower()
-# 					son = music[1].lower()
+		while i < numGenre:	
+			EVi.append(int(EV[i]))
+			i = i + 1
+		return EVi
+	
+	if tim >= 20 and tim <= 23:
+		i = 0
+		s = open("NT_data.txt")
 
-# 					if art == artistName and son == songName :
+		for m in s:
+			NT.append(m.strip())
 
-# 						return (path_genre[g] +"/"+ mus_list[i])
+		while i < numGenre:	
+			NTi.append(int(NT[i]))
+			i = i + 1
+		return NTi
 
-# 					i = i + 1
+## roulette wheel approach for genre selection
 
-# 				g = g + 1
+def roulette(ls):
+	i = 1
+	l = numGenre
 
+	while i < l :
+		ls[i] = ls[i] + ls[i-1]
+		i = i + 1
+	
+	
+	r = random.randint(0,ls[l-1]-1)
+	
+	#print ls	
 
-# 			mus_list = os.listdir("/home/rb101/Music/RoboFM/request/")
+	i = 0
+	while i < l:
+		if r < ls[i]:
+			return i
+		
+		i = i + 1
 
-# 			l = len(mus_list)
+def searchMusicFile(songName,artistName):
+	global numGenre
+	global path_genre
 
-# 			i = 0
+	artistName = artistName.lower()
+	songName = songName.lower()
 
-# 			while i < l:
-# 				music = getMusicName(mus_list[i])
+	g = 0
 
-# 				art = music[0].lower()
-# 				son = music[1].lower()
+	while g < numGenre:
 
-# 				if art == artistName and son == songName :
+		mus_list = os.listdir(path_genre[g])
 
-# 					return ("/home/rb101/Music/RoboFM/request/"+ mus_list[i])
+		l = len(mus_list)
 
-# 				i = i + 1
+		i = 0
 
-# 			return ""
+		while i < l:
+			music = getMusicName(mus_list[i])
 
+			art = music[0].lower()
+			son = music[1].lower()
 
+			if art == artistName and son == songName :
 
-# 		def ret_time():
-# 			localtime = time.asctime(time.localtime(time.time()))
-# 			hour = 0;
-# 			hour = int(localtime[11]+localtime[12])
-# 			return hour
+				return (path_genre[g] +"/"+ mus_list[i])
 
-# 		##text file start
+			i = i + 1
 
-# 		def user_data(tim):
+		g = g + 1
 
-# 			EM = []
-# 			MM = []
-# 			EA = []
-# 			EV = []
-# 			NT = []
-# 			LN = []
 
-# 			EMi = []
-# 			MMi = []
-# 			EAi = []
-# 			EVi = []
-# 			NTi = []
-# 			LNi = []
+	mus_list = os.listdir(requestPath)
 
-# 			global numGenre
+	l = len(mus_list)
 
-# 			if tim >= 0 and tim < 4:
-# 				i = 0
-# 				s = open("LN_data.txt")
+	i = 0
 
-# 				for m in s:
-# 					LN.append(m.strip())
+	while i < l:
+		music = getMusicName(mus_list[i])
 
-# 				while i < numGenre:	
-# 					LNi.append(int(LN[i]))
-# 					i = i + 1
-# 				return LNi
+		art = music[0].lower()
+		son = music[1].lower()
 
-# 			if tim >= 4 and tim < 8:
-# 				i = 0
-# 				s = open("EM_data.txt")
+		if art == artistName and son == songName :
 
-# 				for m in s:
-# 					EM.append(m.strip())
+			return (requestPath+ mus_list[i])
 
-# 				while i < numGenre:	
-# 					EMi.append(int(EM[i]))
-# 					i = i + 1
-# 				return EMi
-		    
-# 			if tim >= 8 and tim < 12:
-# 				i = 0
-# 				s = open("MM_data.txt")
-
-# 				for m in s:
-# 					MM.append(m.strip())
-
-# 				while i < numGenre:	
-# 					MMi.append(int(MM[i]))
-# 					i = i + 1
-# 				return MMi
-		    
-# 			if tim >= 12 and tim < 16:
-# 				i = 0
-# 				s = open("EA_data.txt")
-
-# 				for m in s:
-# 					EA.append(m.strip())
-
-# 				while i < numGenre:	
-# 					EAi.append(int(EA[i]))
-# 					i = i + 1
-# 				return EAi
-		    
-# 			if tim >= 16 and tim < 20:
-# 				i = 0
-# 				s = open("EV_data.txt")
-
-# 				for m in s:
-# 					EV.append(m.strip())
-
-# 				while i < numGenre:	
-# 					EVi.append(int(EV[i]))
-# 					i = i + 1
-# 				return EVi
-		    
-# 			if tim >= 20 and tim <= 23:
-# 				i = 0
-# 				s = open("NT_data.txt")
+		i = i + 1
 
-# 				for m in s:
-# 					NT.append(m.strip())
+	return ""
 
-# 				while i < numGenre:	
-# 					NTi.append(int(NT[i]))
-# 					i = i + 1
-# 				return NTi
+def getMusicName(musicFileName):
+	
+	music = ["",""]
+	musicName = musicFileName.replace(".mp3", "")
 
 
-# 		##text file end
+	#print musicName
 
-# 		## roulette wheel genre
+	i = musicName.find("-")
 
-# 		def roulette(ls):
-# 			i = 1
-# 			l = numGenre
+	j = 0
+	while j < i:
+		music[0] = music[0] + musicName[j]
+		j = j+1
 
-# 			while i < l :
-# 				ls[i] = ls[i] + ls[i-1]
-# 				i = i + 1
-			
-			
-# 			r = random.randint(0,ls[l-1]-1)
-			
-# 			#print ls	
+	l = len(musicName)
+	j = j+1
+	while j < l:
+		music[1] = music[1] + musicName[j]
+		j = j+1
 
-# 			i = 0
-# 			while i < l:
-# 				if r < ls[i]:
-# 				  return i
-				
-# 				i = i + 1
+	#print music[0]
+	#print music[1]
 
+	return music
 
-# 		##
+def getSpeechOfRj(songName,artistName,rj):
 
-# 		def getStringFromFile(path):
+	speech = "You are listening to Radio Meow one O one point Five FM. Hey, its RJ " + rj[1] +". Now, You will listen to "+songName+" by " + artistName 
+	return speech
 
-# 			s = open(path)
-# 			msg = ''
-# 			flg = 0
+def speechOfRj(musicFileName):
+	
+	global RJ
 
-# 			for m in s:
-# 				if flg == 0:
-# 					msg = msg+m.strip()
-# 					flg = 1
-# 				else:
-# 					msg = msg+"\n"+m.strip()
+	music = getMusicName(musicFileName)
+	
+	
+	songName = music[1]
+	artistName = music[0]
 
-# 			return msg
+	l = len(RJ)
+	r = random.randint(0,l-1)
+	rj = RJ[r]
 
-# 		def writeFile(string,path):
-# 			file = open(path,'w')
-# 			file.write(string)
-# 			file.close
+	speech = getSpeechOfRj(songName,artistName,rj)
 
-# 		def readNews(songSpeech,rj):
+	flgNews = readNews(speech,rj)
 
-# 			global newsPath
-# 			newsList = os.listdir(newsPath)
+	if flgNews == 0:
 
-# 			l = len(newsList)
+		rjReq = fulfilReq(speech,rj)
 
-# 			while l > 0:
+		if rjReq[0] == "0":
 
-# 				l = l - 1
+			os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o "+bufferPath+"rjTemp.mp3")
+			os.system("sox "+bufferPath+"rjTemp.mp3 -C 128 -r 44100 "+bufferPath+"rjTemp1.mp3")
+			os.system("sox "+bufferPath+"silence5.mp3 -C 128 -r 44100 "+bufferPath+"silence55.mp3")
+			os.system("sox "+bufferPath+"silence55.mp3 "+bufferPath+"rjTemp1.mp3 "+bufferPath+"rj.mp3")
 
-# 				if newsList[l] == "news.mp3":
-# 					print "news preparing"
+			return rj
 
-# 					speech = "Hello listeners, Its RJ MockingJay Meow. You are listening to Radio Meow one O one point five FM. Now you will listen to the latest bulletin from BBC World Services."
+		return rjReq
 
-# 					os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o /home/rb101/Music/RoboFM/buffer/rjTemp.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/silence5.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/silence55.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/silence55.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3")
+	rj = ["news","news"]
 
-# 					os.system("sox /home/rb101/Music/RoboFM/news/news.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/news/newsTemp.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3 /home/rb101/Music/RoboFM/news/newsTemp.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp3.mp3")
-					
-# 					os.system("gtts-cli '"+ songSpeech +"' -l '"+rj[0]+"' -o /home/rb101/Music/RoboFM/buffer/rjTemp.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/silence5.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/silence55.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/silence55.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3")
+	return rj
+	
 
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp3.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3 /home/rb101/Music/RoboFM/buffer/rj.mp3")
+	#gtts-cli "Hello" -l 'en' -o hello.mp3
 
-# 					os.remove("/home/rb101/Music/RoboFM/news/news.mp3")
 
-# 					print "news prepared"
+def getLyrics(musicFileName , genreName):
+	music = getMusicName(musicFileName)
+	
+	rowNum = 0
+	songName = music[1]
+	artistName = music[0]
 
-# 					return 1
+	ID = -1
+	song = ""
+	artist = ""
+	genre = ""
+	lyric =  ""
 
+	conn = sqlite3.connect('DB/music.db')
+	print ("Opened music database for lyrics successfully");
 
-# 			return 0
+	cursor = conn.execute("SELECT * from MUSIC where song = '"+songName+"' AND artist = '" + artistName + "'")
+	for row in cursor:
+		ID = row[0]
+		song = row[1]
+		artist = row[2]
+		genre = row[3]
+		lyric =  row[4]
 
-# 		def fulfilReq(songSpeech,rj):
+		rowNum = rowNum + 1
 
-# 			retRj = ["0","0","0","0"]
+	if rowNum == 0:
 
-# 			conn = sqlite3.connect('/home/rb101/Dropbox/RadioMeow/DB/request.db')
-# 					#print "Opened request database successfully";
+		print ("Did not found data in database. Searching.....")
+		try:
+			lyric = PyLyrics.getLyrics(artistName,songName)
+			lyric = lyric.replace("'","''")
+			#print lyric
 
-# 			cursor = conn.execute("SELECT * from REQ where STATUS = 1")
-# 			for row in cursor:
-# 				ID = row[0]
-# 				name = row[1]
-# 				song = row[2]
-# 				artist = row[3]
-# 				timeStamp = row[4]
-# 				path = row[5]
-# 				status =  row[6]
-# 				lyric = ""
+		except:
+			print ("no lyrics found")
 
-# 				print "Got a unfulfiled Request and the requested song is already downloaded"
 
-# 				speech = "Hello listeners, Its RJ MockingJay Meow. You are listening to Radio Meow one O one point five FM. We just recieved a song request from " + name +" with love. Now you will listen to " +song+" by "+ artist+"."
+		command = "INSERT INTO MUSIC (song,artist,genre,lyric) VALUES ('" + songName + "', '"+artistName+"','"+ genreName+"', '"+ lyric +"' )"
+		#print command
+		conn.execute(command)
+		conn.commit()
 
-# 				os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o /home/rb101/Music/RoboFM/buffer/rjTemp.mp3")
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3")
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/silence5.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/silence55.mp3")
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/silence55.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3")
+	#time.sleep(20)
+	if len(lyric) > 0:
+		print ("lyrics found")
+		
+	conn.close()
+	return lyric
 
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3 '"+path+"' /home/rb101/Music/RoboFM/buffer/rjTemp3.mp3")
-				
-# 				os.system("gtts-cli '"+ songSpeech +"' -l '"+rj[0]+"' -o /home/rb101/Music/RoboFM/buffer/rjTemp.mp3")
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3")
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/silence5.mp3 -C 128 -r 44100 -c 2 /home/rb101/Music/RoboFM/buffer/silence55.mp3")
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/silence55.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3")
+def getRandomRj():
+	global RJ
+	l = len(RJ)
+	r = random.randint(0,l-1)
+	rj = RJ[r]
 
-# 				os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp3.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp2.mp3 /home/rb101/Music/RoboFM/buffer/rj.mp3")
+	return rj
 
-# 				print "REQ RJ prepared"
+def prepareRjBufferMp3(speech):
+	os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o "+bufferPath+"rjTemp.mp3")
+	os.system("sox "+bufferPath+"rjTemp.mp3 -C 128 -r 44100 "+bufferPath+"rjTemp1.mp3")
+	os.system("sox "+bufferPath+"silence5.mp3 -C 128 -r 44100 "+bufferPath+"silence55.mp3")
+	os.system("sox "+bufferPath+"silence55.mp3 "+bufferPath+"rjTemp1.mp3 "+bufferPath+"rj.mp3")
 
-# 				try:
-# 					lyric = PyLyrics.getLyrics(artist,song)
-# 					lyric = lyric.replace("\n","$")
-			
-# 					if lyric.find("<") > -1:
-# 						lyric = ""
-# 					#print lyric
+def setRjBuffer(filePath):
+	rj = getRandomRj
 
-# 				except:
-# 					print "no lyrics found"
+	if len(filePath) < 1:
+		speech = 'You are listening to '+streamName+'. '+streamDescription
+		prepareRjBufferMp3(speech)
+	
+	else
 
 
-# 				retRj[0] = "REQ"
-# 				retRj[1] = artist
-# 				retRj[2] = song
-# 				retRj[3] = lyric
 
-# 				command = "UPDATE REQ set STATUS = 2 where ID = "+str(ID)
-# 				conn.execute(command)
-# 				conn.commit()
-
-# 				conn.close()
-
-# 				return retRj
-
-# 			return retRj
-
-
-
-
-
-# 		def getMusicName(musicFileName):
-			
-# 			music = ["",""]
-# 			musicName = musicFileName.replace(".mp3", "")
-
-
-# 			#print musicName
-
-# 			i = musicName.find("-")
-
-# 			j = 0
-# 			while j < i:
-# 				music[0] = music[0] + musicName[j]
-# 				j = j+1
-
-# 			l = len(musicName)
-# 			j = j+1
-# 			while j < l:
-# 				music[1] = music[1] + musicName[j]
-# 				j = j+1
-
-# 			#print music[0]
-# 			#print music[1]
-
-# 			return music
-
-# 		def getSpeechOfRj(songName,artistName,rj):
-
-# 			speech = "You are listening to Radio Meow one O one point Five FM. Hey, its RJ " + rj[1] +". Now, You will listen to "+songName+" by " + artistName 
-# 			return speech
-
-# 		def speechOfRj(musicFileName):
-			
-# 			global RJ
-
-# 			music = getMusicName(musicFileName)
-			
-			
-# 			songName = music[1]
-# 			artistName = music[0]
-
-# 			l = len(RJ)
-# 			r = random.randint(0,l-1)
-# 			rj = RJ[r]
-
-# 			speech = getSpeechOfRj(songName,artistName,rj)
-
-# 			flgNews = readNews(speech,rj)
-
-# 			if flgNews == 0:
-
-# 				rjReq = fulfilReq(speech,rj)
-
-# 				if rjReq[0] == "0":
-
-# 					os.system("gtts-cli '"+ speech +"' -l '"+rj[0]+"' -o /home/rb101/Music/RoboFM/buffer/rjTemp.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/rjTemp.mp3 -C 128 -r 44100 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/silence5.mp3 -C 128 -r 44100 /home/rb101/Music/RoboFM/buffer/silence55.mp3")
-# 					os.system("sox /home/rb101/Music/RoboFM/buffer/silence55.mp3 /home/rb101/Music/RoboFM/buffer/rjTemp1.mp3 /home/rb101/Music/RoboFM/buffer/rj.mp3")
-
-# 					return rj
-
-# 				return rjReq
-
-# 			rj = ["news","news"]
-
-# 			return rj
-			
-
-# 			#gtts-cli "Hello" -l 'en' -o hello.mp3
-
-
-# 		def getLyrics(musicFileName , genreName):
-# 			music = getMusicName(musicFileName)
-			
-# 			rowNum = 0;
-# 			songName = music[1]
-# 			artistName = music[0]
-
-# 			ID = -1
-# 			song = ""
-# 			artist = ""
-# 			genre = ""
-# 			lyric =  ""
-
-# 			conn = sqlite3.connect('/home/rb101/Dropbox/RadioMeow/DB/music.db')
-# 			print "Opened music database for lyrics successfully";
-
-# 			cursor = conn.execute("SELECT * from MUSIC where song = '"+songName+"' AND artist = '" + artistName + "'")
-# 			for row in cursor:
-# 				ID = row[0]
-# 				song = row[1]
-# 				artist = row[2]
-# 				genre = row[3]
-# 				lyric =  row[4]
-
-# 				rowNum = rowNum + 1
-
-# 			if rowNum == 0:
-
-# 				print "Did not found data in database. Searching....."
-# 				try:
-# 					lyric = PyLyrics.getLyrics(artistName,songName)
-# 					lyric = lyric.replace("'","''")
-# 					#print lyric
-
-# 				except:
-# 					print "no lyrics found"
-
-
-# 				command = "INSERT INTO MUSIC (song,artist,genre,lyric) VALUES ('" + songName + "', '"+artistName+"','"+ genreName+"', '"+ lyric +"' )"
-# 				#print command
-# 				conn.execute(command);
-# 				conn.commit()
-
-# 			#time.sleep(20)
-# 			if len(lyric) > 0:
-# 				print "lyrics found"
-				
-# 			conn.close()
-# 			return lyric
 
 def mainGenjam():
 	try:
 		_thread.start_new_thread( ices, () )
+		#readNews("genajjnvwev eda",alphaMeow)
 	except:
 		print ("Error: unable to start ices thread")
-	time.sleep(100000)
+	
+	try:
+		_thread.start_new_thread( newsFetcher, () )
+	except:
+		print ("Error: unable to start newsFetcher thread")
+	
+	try:
+		_thread.start_new_thread( requestFetcher, () )
+	except:
+		print ("Error: unable to start requestFetcher thread")
+
+	var = 1
+	while var == 1 :
+
+		rt = ret_time()
+		ls = user_data(rt)
+		genre =  roulette(ls)
+		mus_list = os.listdir(path_genre[genre])
+		
+		print (genre)
+		
+		l = len(mus_list)
+		i = 0
+		r = random.randint(0,l-1)
+
+		print (path_genre[genre]+mus_list[r])
+		#replace_line(playlistFile, 1, path_genre[genre]+mus_list[r]+'\n')
+
+		time.sleep(60)
+
 
 mainGenjam()
 # inf = 1

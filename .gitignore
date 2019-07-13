@@ -2,6 +2,8 @@ music/
 news/
 incomplete/
 DB/
+buffer/
+request/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

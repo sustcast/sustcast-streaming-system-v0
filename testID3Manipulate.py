@@ -1,13 +1,20 @@
 from mp3_tagger import MP3File, VERSION_1, VERSION_2, VERSION_BOTH
 
 # Create MP3File instance.
-mp3 = MP3File('music/etr/Alan Walker-Faded.mp3')
-mp3.set_version(VERSION_BOTH)
+mp3 = MP3File('music/scl/Firoza Begum-Bolo Priotomo Bolo.mp3')
+mp3.set_version(VERSION_2)
 
 # Get/set/del tags value.
 alb = mp3.song
-mp3.song = 'Fade'
-mp3.artist = 'Alan Walker'
+
+#mp3.song = "Bolo Priotomo Bolo"
+#mp3.artist = "Firoza Begum"
+#mp3.genre = "SEMI_CLASSICAL"
+#mp3.comment = ''
+
+print(mp3.song)
+#mp3.song = 'Fade'
+#mp3.artist = 'Alan Walker'
 #del mp3.album
 
 """
@@ -40,7 +47,7 @@ Output:
 """
 
 # # By default selected tags in both versions.
-mp3.set_version(VERSION_BOTH)
+#mp3.set_version(VERSION_BOTH)
 
 # # Change to 2.x version.
 #mp3.set_version(VERSION_2)
@@ -49,4 +56,4 @@ mp3.set_version(VERSION_BOTH)
 #mp3.set_version(VERSION_1)
 
 # # After the tags are edited, you must call the save method.
-mp3.save()
+#mp3.save()
