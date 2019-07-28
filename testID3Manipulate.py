@@ -1,14 +1,14 @@
 from mp3_tagger import MP3File, VERSION_1, VERSION_2, VERSION_BOTH
 
 # Create MP3File instance.
-mp3 = MP3File('request/linkin park-battle symphony.mp3')
+mp3 = MP3File('music/rck/Linkin Park-Numb.mp3')
 mp3.set_version(VERSION_2)
 
 # Get/set/del tags value.
 alb = mp3.song
 
-#mp3.song = "Bolo Priotomo Bolo"
-#mp3.artist = "Firoza Begum"
+mp3.song = "Numb"
+mp3.artist = "Linkin Park"
 #mp3.genre = "SEMI_CLASSICAL"
 #mp3.comment = ''
 
@@ -56,4 +56,4 @@ Output:
 #mp3.set_version(VERSION_1)
 
 # # After the tags are edited, you must call the save method.
-#mp3.save()
+mp3.save()

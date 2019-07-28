@@ -215,9 +215,26 @@ def requestFetcher():
                       name+" for "+artist + " " + song)
 
                 if len(path) == 0:
+                    #### check if this is an valid song
+                    lyric = ''
+                    try:
+                        lyric = PyLyrics.getLyrics(artist, song)
+                        lyric = lyric.replace("'", "''")
+                    except:
+                        lyric = ''
+                    
+                    if lyric.find('<') > -1:
+                        lyric = ''
+                    
+                    if len(lyric) == 0:
+                        print("RequestFetcher ==> Just got an invalid request")
+                        command = "UPDATE REQ set STATUS = 3 where ID = "+str(ID)
+                        conn.execute(command)
+                        conn.commit()
+                        continue
+                ####
 
-                    print(
-                        "Request Fetcher ==> Did not find requested music in Music Collection")
+                    print("Request Fetcher ==> Did not find requested music in Music Collection")
                     print("Request Fetcher ==> Downloading.....")
 
                     artist = artist.lower()
