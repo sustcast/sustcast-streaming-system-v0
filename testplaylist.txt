@@ -1,2 +1,2 @@
-music/buffer/rj.mp3
-music/pop/linkin park-one more light.mp3
+buffer/rj.mp3
+music/met/Alter Bridge-Broken Wings.mp3

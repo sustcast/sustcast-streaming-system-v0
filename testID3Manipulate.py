@@ -1,7 +1,7 @@
 from mp3_tagger import MP3File, VERSION_1, VERSION_2, VERSION_BOTH
 
 # Create MP3File instance.
-mp3 = MP3File('music/scl/Firoza Begum-Bolo Priotomo Bolo.mp3')
+mp3 = MP3File('request/linkin park-battle symphony.mp3')
 mp3.set_version(VERSION_2)
 
 # Get/set/del tags value.

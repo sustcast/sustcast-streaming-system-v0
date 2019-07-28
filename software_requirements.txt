@@ -23,3 +23,5 @@ https://github.com/pndurette/gTTS/issues/158
 #sox
 sudo apt-get install libsox-fmt-mp3
 sudo apt-get install sox
+
+https://tecadmin.net/install-ffmpeg-on-linux/
