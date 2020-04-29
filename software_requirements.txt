@@ -1,0 +1,24 @@
+
+//streamripper
+sudo apt-get update
+sudo apt-get install streamripper
+
+//icecast2
+//ices0.4
+https://www.linux.com/news/broadcast-your-music-icecast
+https://github.com/dcorbe/ices/blob/master/README
+https://icecast.org/docs/icecast-trunk/server_stats/#json-stats
+
+https://pypi.org/project/mp3-tagger/
+
+https://github.com/yask123/Instant-Music-Downloader
+
+#gTTS
+https://pypi.org/project/gTTS/
+https://github.com/pndurette/gTTS/issues/158
+
+#sox
+sudo apt-get install libsox-fmt-mp3
+sudo apt-get install sox
+
+https://tecadmin.net/install-ffmpeg-on-linux/
